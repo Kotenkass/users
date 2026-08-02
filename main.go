@@ -7,7 +7,7 @@ import (
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 
 	"github.com/KOTENKASS/users/actions"
-	dbhandler "github.com/KOTENKASS/users/lib"
+	"github.com/KOTENKASS/users/db"
 )
 
 func main() {
@@ -17,13 +17,13 @@ func main() {
 	e.Use(echoMiddleware.Logger())
 	e.Use(echoMiddleware.Recover())
 
-	db := &dbhandler.DBHandler{}
-	if err := db.ConnectPg(); err != nil {
+	dbh := db.UsersDBHandler{}
+	if err := dbh.ConnectPg(); err != nil {
 		e.Logger.Fatal(err)
 	}
-	defer db.Close()
+	defer dbh.Close()
 
-	if err := db.RunMigrations(); err != nil {
+	if err := dbh.RunMigrations(); err != nil {
 		e.Logger.Fatal(err)
 	}
 

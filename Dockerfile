@@ -1,0 +1,23 @@
+FROM golang:1.25-alpine AS build
+
+WORKDIR /src
+
+RUN apk add --no-cache git
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /out/users ./
+
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+COPY --from=build /out/users /app/users
+COPY migrations /app/migrations
+
+EXPOSE 8080
+
+ENTRYPOINT ["/app/users"]
