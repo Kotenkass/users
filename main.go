@@ -1,13 +1,12 @@
 package main
 
 import (
-	"net/http"
 	"os"
 
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 
-	"users-microservice/actions"
+	"github.com/KOTENKASS/users/actions"
 )
 
 func main() {
