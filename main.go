@@ -7,6 +7,7 @@ import (
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 
 	"github.com/KOTENKASS/users/actions"
+	dbhandler "github.com/KOTENKASS/users/lib"
 )
 
 func main() {
@@ -15,6 +16,16 @@ func main() {
 	e.HideBanner = true
 	e.Use(echoMiddleware.Logger())
 	e.Use(echoMiddleware.Recover())
+
+	db := &dbhandler.DBHandler{}
+	if err := db.ConnectPg(); err != nil {
+		e.Logger.Fatal(err)
+	}
+	defer db.Close()
+
+	if err := db.RunMigrations(); err != nil {
+		e.Logger.Fatal(err)
+	}
 
 	actions.RegisterRoutes(e)
 
