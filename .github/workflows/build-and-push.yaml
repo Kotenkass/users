@@ -31,29 +31,29 @@ jobs:
     runs-on: self-hosted
     needs: build
     env:
-      MANIFEST_PATH: /home/anikolaev/users/manifest.yaml
-      KUBECONFIG: /home/1001/.kube/config
+      MANIFEST_PATH: /workspace/manifest.yaml
+      KUBECONFIG: /root/.kube/config
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     container:
       image: bitnami/kubectl:latest
-      options: --user 1001 -v /home/anikolaev/.kube:/home/1001/.kube:ro -v /home/anikolaev/users:/home/1001/users:ro
+      options: --user 0 -v /home/anikolaev/.kube:/root/.kube:ro -v /home/anikolaev/users:/workspace:ro
 
     steps:
       - name: Create or update users environment Secret
         run: |
-          kubectl create secret generic users-env \
+          kubectl --kubeconfig "$KUBECONFIG" create secret generic users-env \
             --from-literal=DB_HOST="$DB_HOST" \
             --from-literal=DB_NAME="$DB_NAME" \
             --from-literal=DB_PASSWORD="$DB_PASSWORD" \
-            --dry-run=client -o yaml | kubectl apply -f -
+            --dry-run=client -o yaml | kubectl --kubeconfig "$KUBECONFIG" apply -f -
 
       - name: Apply Manifest
-        run: kubectl apply -f "$MANIFEST_PATH"
+        run: kubectl --kubeconfig "$KUBECONFIG" apply -f "$MANIFEST_PATH"
 
       - name: Set Docker image
-        run: kubectl set image deployment/user-deployment users="${{ secrets.DOCKER_HUB_USERNAME }}/users:latest"
+        run: kubectl --kubeconfig "$KUBECONFIG" set image deployment/user-deployment users="${{ secrets.DOCKER_HUB_USERNAME }}/users:latest"
 
       - name: Restart Deployment
-        run: kubectl rollout restart deployment user-deployment
+        run: kubectl --kubeconfig "$KUBECONFIG" rollout restart deployment user-deployment
