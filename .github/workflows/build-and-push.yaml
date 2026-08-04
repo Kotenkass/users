@@ -1,0 +1,59 @@
+name: Build and Push Docker Image
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/users:latest
+
+  deploy:
+    runs-on: self-hosted
+    needs: build
+    env:
+      MANIFEST_PATH: /home/anikolaev/users/manifest.yaml
+      KUBECONFIG: /home/1001/.kube/config
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    container:
+      image: bitnami/kubectl:latest
+      options: --user 1001 -v /home/anikolaev/.kube:/home/1001/.kube:ro -v /home/anikolaev/users:/home/1001/users:ro
+
+    steps:
+      - name: Create or update users environment Secret
+        run: |
+          kubectl create secret generic users-env \
+            --from-literal=DB_HOST="$DB_HOST" \
+            --from-literal=DB_NAME="$DB_NAME" \
+            --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply Manifest
+        run: kubectl apply -f "$MANIFEST_PATH"
+
+      - name: Set Docker image
+        run: kubectl set image deployment/user-deployment users="${{ secrets.DOCKER_HUB_USERNAME }}/users:latest"
+
+      - name: Restart Deployment
+        run: kubectl rollout restart deployment user-deployment
