@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
@@ -14,6 +15,9 @@ func main() {
 	e := echo.New()
 
 	e.HideBanner = true
+	if strings.EqualFold(os.Getenv("LOG_LEVEL"), "debug") {
+		e.Debug = true
+	}
 	e.Use(echoMiddleware.Logger())
 	e.Use(echoMiddleware.Recover())
 
