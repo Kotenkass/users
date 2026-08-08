@@ -169,3 +169,95 @@ spec:
             limits:
               cpu: 250m
               memory: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-deployment
+  namespace: dev
+  labels:
+    app: users
+    environment: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+      environment: dev
+  template:
+    metadata:
+      labels:
+        app: users
+        environment: dev
+    spec:
+      containers:
+        - name: users
+          image: docker.io/kotenkass/users
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: users-dev-env
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: users-dev-env
+                  key: DB_NAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: users-dev-env
+                  key: DB_PASSWORD
+            - name: MIGRATION_PATH
+              value: /app/migrations
+            - name: LOG_LEVEL
+              value: debug
+          readinessProbe:
+            httpGet:
+              path: /users
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /users
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: dev
+  labels:
+    app: users
+    environment: dev
+spec:
+  type: ClusterIP
+  selector:
+    app: users
+    environment: dev
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
