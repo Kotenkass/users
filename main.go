@@ -2,33 +2,35 @@ package main
 
 import (
 	"os"
-	"strings"
-
-	"github.com/labstack/echo/v4"
-	echoMiddleware "github.com/labstack/echo/v4/middleware"
 
 	"github.com/KOTENKASS/users/actions"
 	"github.com/KOTENKASS/users/db"
+	appLogger "github.com/KOTENKASS/users/internal/logger"
+	appMiddleware "github.com/KOTENKASS/users/internal/middleware"
+	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	e := echo.New()
+	l := appLogger.NewLogger()
 
+	e := echo.New()
 	e.HideBanner = true
-	if strings.EqualFold(os.Getenv("LOG_LEVEL"), "debug") {
+	if appLogger.ParseLevel(os.Getenv(appLogger.EnvLogLevel)) == logrus.DebugLevel {
 		e.Debug = true
 	}
-	e.Use(echoMiddleware.Logger())
+	e.Use(appMiddleware.RequestID(l))
 	e.Use(echoMiddleware.Recover())
 
 	dbh := db.UsersDBHandler{}
 	if err := dbh.ConnectPg(); err != nil {
-		e.Logger.Fatal(err)
+		l.Fatal(err)
 	}
 	defer dbh.Close()
 
 	if err := dbh.RunMigrations(); err != nil {
-		e.Logger.Fatal(err)
+		l.Fatal(err)
 	}
 
 	actions.RegisterRoutes(e)
@@ -38,5 +40,5 @@ func main() {
 		port = "8080"
 	}
 
-	e.Logger.Fatal(e.Start(":" + port))
+	l.Fatal(e.Start(":" + port))
 }

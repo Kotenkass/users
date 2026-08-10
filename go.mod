@@ -6,6 +6,7 @@ require (
 	github.com/go-pg/pg/v10 v10.15.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/labstack/echo/v4 v4.15.4
+	github.com/sirupsen/logrus v1.9.4
 )
 
 require (
