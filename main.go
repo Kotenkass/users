@@ -6,6 +6,7 @@ import (
 	"github.com/KOTENKASS/users/actions"
 	"github.com/KOTENKASS/users/db"
 	appLogger "github.com/KOTENKASS/users/internal/logger"
+	appMetrics "github.com/KOTENKASS/users/internal/metrics"
 	appMiddleware "github.com/KOTENKASS/users/internal/middleware"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
@@ -32,6 +33,12 @@ func main() {
 	if err := dbh.RunMigrations(); err != nil {
 		l.Fatal(err)
 	}
+	if err := appMetrics.ObserveUsersTotal(&dbh); err != nil {
+		l.Fatal(err)
+	}
+
+	e.Use(appMetrics.Middleware())
+	e.GET("/metrics", appMetrics.Handler())
 
 	actions.RegisterRoutes(e)
 

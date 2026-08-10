@@ -88,6 +88,11 @@ func (db *UsersDBHandler) ListUsers() ([]User, error) {
 	return users, nil
 }
 
+// CountUsers returns the total number of users.
+func (db *UsersDBHandler) CountUsers() (int, error) {
+	return db.DBHandler.Conn.Model((*User)(nil)).Count()
+}
+
 // DeleteUser deletes a user by chat_id.
 func (db *UsersDBHandler) DeleteUser(chatID int64) error {
 	_, err := db.DBHandler.Conn.Model((*User)(nil)).Where("chat_id = ?", chatID).Delete()
