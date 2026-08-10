@@ -99,7 +99,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-dev
+  name: redis-master
   namespace: dev
   labels:
     app: redis
@@ -118,7 +118,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-dev
+  name: redis-master
   namespace: dev
   labels:
     app: redis
@@ -173,7 +173,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-deployment
+  name: user
   namespace: dev
   labels:
     app: users
