@@ -192,7 +192,7 @@ spec:
     spec:
       containers:
         - name: users
-          image: docker.io/kotenkass/users
+          image: docker.io/anikolaevdo/users
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

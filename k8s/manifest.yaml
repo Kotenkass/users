@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: users
-          image: DOCKERHUBUSERNAME/users:latest
+          image: docker.io/anikolaevdo/users
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
