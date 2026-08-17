@@ -14,6 +14,7 @@ spec:
       labels:
         app: users
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: users
           image: docker.io/anikolaevdo/users
@@ -37,6 +38,29 @@ spec:
                 secretKeyRef:
                   name: users-env
                   key: DB_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -51,5 +75,5 @@ spec:
   ports:
     - name: http
       port: 8080
-      targetPort: 8080
+      targetPort: http
       protocol: TCP

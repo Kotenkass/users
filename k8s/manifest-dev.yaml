@@ -45,6 +45,7 @@ spec:
         app: postgres
         environment: dev
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: postgres
           image: postgres:16-alpine
@@ -135,6 +136,7 @@ spec:
         app: redis
         environment: dev
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: redis
           image: redis:7-alpine
@@ -190,6 +192,7 @@ spec:
         app: users
         environment: dev
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: users
           image: docker.io/anikolaevdo/users
@@ -221,7 +224,7 @@ spec:
               value: debug
           readinessProbe:
             httpGet:
-              path: /users
+              path: /readyz
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
@@ -229,7 +232,7 @@ spec:
             failureThreshold: 12
           livenessProbe:
             httpGet:
-              path: /users
+              path: /healthz
               port: http
             initialDelaySeconds: 20
             periodSeconds: 20
@@ -237,11 +240,11 @@ spec:
             failureThreshold: 6
           resources:
             requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
               cpu: 100m
               memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service
