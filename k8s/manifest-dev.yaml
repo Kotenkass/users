@@ -1,0 +1,270 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+  labels:
+    environment: dev
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-dev
+  namespace: dev
+  labels:
+    app: postgres
+    environment: dev
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+    environment: dev
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-dev
+  namespace: dev
+  labels:
+    app: postgres
+    environment: dev
+spec:
+  serviceName: postgres-dev
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+      environment: dev
+  template:
+    metadata:
+      labels:
+        app: postgres
+        environment: dev
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: postgres
+          image: postgres:16.4-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: users
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-dev-env
+                  key: POSTGRES_PASSWORD
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+              ephemeral-storage: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+              ephemeral-storage: 512Mi
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: dev
+  labels:
+    app: redis
+    environment: dev
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+    environment: dev
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-master
+  namespace: dev
+  labels:
+    app: redis
+    environment: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      environment: dev
+  template:
+    metadata:
+      labels:
+        app: redis
+        environment: dev
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: redis
+          image: redis:7.2.5-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli ping | grep -q PONG
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli ping | grep -q PONG
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+              ephemeral-storage: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user
+  namespace: dev
+  labels:
+    app: users
+    environment: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+      environment: dev
+  template:
+    metadata:
+      labels:
+        app: users
+        environment: dev
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: users
+          image: docker.io/anikolaevdo/users:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: SERVER_PORT
+              value: "8080"
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: users-dev-env
+                  key: DB_HOST
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: users-dev-env
+                  key: DB_NAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: users-dev-env
+                  key: DB_PASSWORD
+            - name: MIGRATION_PATH
+              value: /app/migrations
+            - name: LOG_LEVEL
+              value: debug
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+              ephemeral-storage: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: dev
+  labels:
+    app: users
+    environment: dev
+spec:
+  type: ClusterIP
+  selector:
+    app: users
+    environment: dev
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP

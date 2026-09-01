@@ -2,42 +2,52 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user
+  namespace: dev
   labels:
     app: users
+    environment: dev
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: users
+      environment: dev
   template:
     metadata:
       labels:
         app: users
+        environment: dev
     spec:
       automountServiceAccountToken: false
       containers:
         - name: users
-          image: docker.io/anikolaevdo/users:latest
-          imagePullPolicy: IfNotPresent
+          image: docker.io/anikolaevdo/users:dev
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
           env:
+            - name: SERVER_PORT
+              value: "8080"
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
-                  name: users-env
+                  name: users-dev-env
                   key: DB_HOST
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
-                  name: users-env
+                  name: users-dev-env
                   key: DB_NAME
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: users-env
+                  name: users-dev-env
                   key: DB_PASSWORD
+            - name: MIGRATION_PATH
+              value: /app/migrations
+            - name: LOG_LEVEL
+              value: debug
           readinessProbe:
             httpGet:
               path: /readyz
@@ -67,12 +77,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: user-service
+  namespace: dev
   labels:
     app: users
+    environment: dev
 spec:
   type: ClusterIP
   selector:
     app: users
+    environment: dev
   ports:
     - name: http
       port: 8080
