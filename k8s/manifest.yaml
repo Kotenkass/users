@@ -17,7 +17,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: users
-          image: docker.io/anikolaevdo/users
+          image: docker.io/anikolaevdo/users:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -58,6 +58,7 @@ spec:
             requests:
               cpu: 25m
               memory: 32Mi
+              ephemeral-storage: 64Mi
             limits:
               cpu: 100m
               memory: 128Mi

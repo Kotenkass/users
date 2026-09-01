@@ -5,12 +5,11 @@ on:
     branches:
       - master
 
-permissions:
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -36,6 +35,8 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build
+    permissions:
+      contents: read
     env:
       MANIFEST_PATH: /workspace/k8s/manifest.yaml
       KUBECONFIG: /root/.kube/config
@@ -44,7 +45,7 @@ jobs:
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     container:
-      image: bitnami/kubectl:latest
+      image: bitnami/kubectl:sha256-4ecef3abe0839b3bbe7eb75d2177d353cb65db55b533e063513e23bb83db7e00
       options: --user 0 -v /home/anikolaev/.kube:/root/.kube:ro -v /home/anikolaev/users:/workspace:ro
 
     steps:

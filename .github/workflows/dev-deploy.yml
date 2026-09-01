@@ -5,13 +5,12 @@ on:
     branches:
       - dev
 
-permissions:
-  contents: read
-
 jobs:
   build-and-deploy:
     name: Build image and deploy to dev
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     env:
       IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/users
@@ -68,12 +67,14 @@ jobs:
             --dry-run=client -o yaml | kubectl --kubeconfig "$KUBECONFIG" apply -f -
 
       - name: Create or update users dev Secret
+        env:
+          DEV_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
         run: |
           kubectl --kubeconfig "$KUBECONFIG" create secret generic users-dev-env \
             --namespace "$NAMESPACE" \
             --from-literal=DB_HOST="postgres-dev.${NAMESPACE}.svc.cluster.local" \
             --from-literal=DB_NAME="users" \
-            --from-literal=DB_PASSWORD="${{ secrets.DEV_DB_PASSWORD }}" \
+            --from-literal=DB_PASSWORD \
             --from-literal=DB_USER="postgres" \
             --dry-run=client -o yaml | kubectl --kubeconfig "$KUBECONFIG" apply -f -
 
