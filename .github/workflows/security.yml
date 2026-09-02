@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - main
+      - dev
   pull_request:
     branches:
       - master
@@ -16,9 +17,59 @@ permissions:
   contents: read
 
 jobs:
+  image-security:
+    name: Image security - build and Trivy image scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker metadata
+        id: meta
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            tag="${GITHUB_REF_NAME#v}"
+          else
+            tag="pr-${GITHUB_RUN_ID}"
+          fi
+          image="${IMAGE_NAME}:${tag}"
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
+          echo "tags=${image}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image locally
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          provenance: false
+
+      - name: Run Trivy image scan
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v trivy-cache:/root/.cache \
+            aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 \
+            image \
+              --scanners vuln,secret \
+              --severity CRITICAL \
+              --exit-code 1 \
+              --format table \
+              "${{ steps.meta.outputs.image }}"
+
   sast:
     name: SAST - Semgrep
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -29,7 +80,7 @@ jobs:
           docker run --rm \
             -v "$PWD:/src" \
             -w /src \
-            returntocorp/semgrep:latest \
+            returntocorp/semgrep@sha256:b94b53d02fd4a022f9eac4e2af1380f5c3c4c21400e79d3336bdff1d1db5e796 \
             semgrep \
               --config p/golang \
               --config p/security-audit \
@@ -51,8 +102,8 @@ jobs:
           if-no-files-found: error
 
   sca:
-    name: SCA - govulncheck and Trivy
-    runs-on: ubuntu-latest
+    name: SCA - govulncheck and Trivy filesystem
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
@@ -86,7 +137,7 @@ jobs:
           docker run --rm \
             -v "$PWD:/src" \
             -v trivy-cache:/root/.cache \
-            aquasec/trivy:latest \
+            aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 \
             fs \
               --scanners vuln,secret \
               --format sarif \
@@ -101,7 +152,7 @@ jobs:
           docker run --rm \
             -v "$PWD:/src" \
             -v trivy-cache:/root/.cache \
-            aquasec/trivy:latest \
+            aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 \
             fs \
               --scanners vuln,secret \
               --severity HIGH,CRITICAL \
