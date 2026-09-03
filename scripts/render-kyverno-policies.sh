@@ -4,7 +4,7 @@ set -euo pipefail
 out_dir="${1:?usage: scripts/render-kyverno-policies.sh <output-dir> [source-dir]}"
 src_dir="${2:-k8s/policies}"
 
-if [ -z "${COSIGN_PUB:-}" ]; then
+if [[ -z "${COSIGN_PUB:-}" ]]; then
   echo "COSIGN_PUB is required to render Kyverno cosign policy" >&2
   exit 1
 fi
