@@ -35,12 +35,14 @@ jobs:
       - name: Docker metadata
         id: meta
         run: |
+          image_name="${IMAGE_NAME,,}"
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             tag="${GITHUB_REF_NAME#v}"
+            tag="${tag,,}"
           else
             tag="pr-${GITHUB_RUN_ID}"
           fi
-          image="${IMAGE_NAME}:${tag}"
+          image="${image_name}:${tag}"
           echo "image=${image}" >> "$GITHUB_OUTPUT"
           echo "tags=${image}" >> "$GITHUB_OUTPUT"
 
