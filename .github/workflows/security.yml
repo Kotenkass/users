@@ -27,7 +27,7 @@ jobs:
       IMAGE_NAME: ghcr.io/${{ github.repository }}
     steps:
       - name: Checkout
-        uses: actions/checkout@40f1582b2485089dde7abd97c1529aa768e1baff
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
@@ -73,7 +73,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@40f1582b2485089dde7abd97c1529aa768e1baff
+        uses: actions/checkout@v4
 
       - name: Run Semgrep
         run: |
@@ -111,10 +111,10 @@ jobs:
       GOFLAGS: -mod=readonly
     steps:
       - name: Checkout
-        uses: actions/checkout@40f1582b2485089dde7abd97c1529aa768e1baff
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
