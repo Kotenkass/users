@@ -17,7 +17,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: users
-          image: docker.io/anikolaevdo/users:latest
+          image: docker.io/anikolaevdo/users:release
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
