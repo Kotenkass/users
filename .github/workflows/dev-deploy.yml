@@ -17,6 +17,7 @@ jobs:
     env:
       IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/users
       IMAGE_TAG: dev
+      COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
       NAMESPACE: dev
       KUBECONFIG: /tmp/kubeconfig
       MANIFEST_PATH: k8s/manifest-dev.yaml
@@ -76,7 +77,15 @@ jobs:
         run: kubectl --kubeconfig "$KUBECONFIG" apply -f k8s/rbac/kyverno-policy-admin.yaml
 
       - name: Apply Kyverno image security policies
-        run: kubectl --kubeconfig "$KUBECONFIG" apply -f k8s/policies
+        env:
+          COSIGN_PUB: ${{ secrets.COSIGN_PUB }}
+        run: |
+          if [ -z "$COSIGN_PUB" ] || [ -z "$COSIGN_PASSWORD" ]; then
+            echo "COSIGN_PUB and COSIGN_PASSWORD secrets are required to render Kyverno policies." >&2
+            exit 1
+          fi
+          COSIGN_PUB="$COSIGN_PUB" ./scripts/render-kyverno-policies.sh rendered-k8s/policies k8s/policies
+          kubectl --kubeconfig "$KUBECONFIG" apply -f rendered-k8s/policies
 
       - name: Ensure dev namespace exists
         run: |

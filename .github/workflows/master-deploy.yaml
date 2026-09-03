@@ -16,6 +16,7 @@ jobs:
       IMAGE_TAG: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.sha }}
       COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
       COSIGN_PUB: ${{ secrets.COSIGN_PUB }}
+      COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
     outputs:
       image_ref: ${{ steps.image.outputs.image_ref }}
       namespace: prod
@@ -93,9 +94,10 @@ jobs:
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PUB: ${{ secrets.COSIGN_PUB }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          if [ -z "$COSIGN_KEY" ] || [ -z "$COSIGN_PUB" ]; then
-            echo "COSIGN_KEY and COSIGN_PUB secrets are required for pull requests targeting main." >&2
+          if [ -z "$COSIGN_KEY" ] || [ -z "$COSIGN_PUB" ] || [ -z "$COSIGN_PASSWORD" ]; then
+            echo "COSIGN_KEY, COSIGN_PUB and COSIGN_PASSWORD secrets are required for pull requests targeting main." >&2
             exit 1
           fi
           printf '%s\n' "$COSIGN_KEY" > cosign.key
