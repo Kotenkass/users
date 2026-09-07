@@ -15,7 +15,7 @@ jobs:
       IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/users
       IMAGE_TAG: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.sha }}
       COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
-      COSIGN_PUB: ${{ secrets.COSIGN_PUB }}
+      COSIGN_PUB: ${{ vars.COSIGN_PUB }}
       COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
     outputs:
       image_ref: ${{ steps.image.outputs.image_ref }}
@@ -28,10 +28,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Render Kyverno policies
-        env:
-          COSIGN_PUB: ${{ secrets.COSIGN_PUB }}
         run: |
-          COSIGN_PUB="$COSIGN_PUB" ./scripts/render-kyverno-policies.sh rendered-k8s/policies k8s/policies
+          ./scripts/render-kyverno-policies.sh rendered-k8s/policies k8s/policies
 
       - name: Upload rendered Kyverno policies
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -93,11 +91,10 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
-          COSIGN_PUB: ${{ secrets.COSIGN_PUB }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
         run: |
-          if [ -z "$COSIGN_KEY" ] || [ -z "$COSIGN_PUB" ] || [ -z "$COSIGN_PASSWORD" ]; then
-            echo "COSIGN_KEY, COSIGN_PUB and COSIGN_PASSWORD secrets are required for pull requests targeting main." >&2
+          if [ -z "$COSIGN_KEY" ] || [ -z "$COSIGN_PASSWORD" ]; then
+            echo "COSIGN_KEY and COSIGN_PASSWORD secrets are required for pull requests targeting main." >&2
             exit 1
           fi
           printf '%s\n' "$COSIGN_KEY" > cosign.key

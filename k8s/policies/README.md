@@ -16,10 +16,8 @@ This directory contains Kyverno policies for container image security.
 
 3. `require-cosign-signature-prod.yaml`
    - requires production images to be signed with the configured cosign public key
-   - starts in `audit` mode
-   - replace `REPLACE_ME_WITH_YOUR_COSIGN_PUBLIC_KEY` with your real key before enabling enforcement
+   - uses `COSIGN_PUB` repository variable
 
 ## Enforcement
 
-Keep `validationFailureAction: audit` until the existing stack passes all checks.
-Only then switch the relevant policies to `enforce`.
+Policies are committed in `enforce` mode.
