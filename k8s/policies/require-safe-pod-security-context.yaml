@@ -7,10 +7,10 @@ metadata:
     policies.kyverno.io/category: Pod Security
     policies.kyverno.io/severity: high
     policies.kyverno.io/description: >-
-      Blocks privileged containers and runAsNonRoot=false. Starts in audit mode so
-      existing workloads can be remediated before enforcement.
+      Blocks privileged containers and runAsNonRoot=false. Enforces the policy
+      for all matching workloads.
 spec:
-  validationFailureAction: audit
+  validationFailureAction: enforce
   background: true
   rules:
     - name: disallow-privileged-containers

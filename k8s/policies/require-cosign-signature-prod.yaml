@@ -8,9 +8,9 @@ metadata:
     policies.kyverno.io/severity: critical
     policies.kyverno.io/description: >-
       Requires production workloads to use images signed with the configured cosign key.
-      Enable validationFailureAction: enforce only after all production images are signed.
+      Enforce production image signature validation for all matching workloads.
 spec:
-  validationFailureAction: audit
+  validationFailureAction: enforce
   background: true
   rules:
     - name: require-signed-images-in-prod

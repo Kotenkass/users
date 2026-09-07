@@ -8,9 +8,9 @@ metadata:
     policies.kyverno.io/severity: high
     policies.kyverno.io/description: >-
       Requires tagged images from the configured registry, blocks latest tags,
-      and starts in audit mode so existing workloads can be remediated before enforcement.
+      and enforces the policy for all matching workloads.
 spec:
-  validationFailureAction: audit
+  validationFailureAction: enforce
   background: true
   rules:
     - name: disallow-latest-tag
