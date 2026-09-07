@@ -24,8 +24,6 @@ spec:
       verifyImages:
         - imageReferences:
             - "docker.io/anikolaevdo/users*"
-          mutateDigest: false
-          verifyDigest: false
           attestors:
             - entries:
                 - keys:
