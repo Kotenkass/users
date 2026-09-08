@@ -116,6 +116,7 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build
+    if: github.event_name == 'push'
     permissions:
       contents: read
     env:
