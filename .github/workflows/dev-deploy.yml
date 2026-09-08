@@ -109,7 +109,7 @@ jobs:
             --namespace "$NAMESPACE" \
             --from-literal=DB_HOST="postgres-dev.${NAMESPACE}.svc.cluster.local" \
             --from-literal=DB_NAME="users" \
-            --from-literal=DB_PASSWORD \
+            --from-literal=DB_PASSWORD="$DEV_DB_PASSWORD" \
             --from-literal=DB_USER="postgres" \
             --dry-run=client -o yaml | kubectl --kubeconfig "$KUBECONFIG" apply -f -
 
