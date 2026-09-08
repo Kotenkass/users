@@ -25,6 +25,9 @@ spec:
               namespaces:
                 - kafka
                 - clickhouse-operator-system
+          - resources:
+              names:
+                - "analytics-clickhouse-*"
       validate:
         message: "Privileged containers are not allowed."
         pattern:
@@ -48,6 +51,9 @@ spec:
               namespaces:
                 - kafka
                 - clickhouse-operator-system
+          - resources:
+              names:
+                - "analytics-clickhouse-*"
       validate:
         message: "runAsNonRoot must not be set to false."
         pattern:
