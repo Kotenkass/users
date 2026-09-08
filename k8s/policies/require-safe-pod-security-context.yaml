@@ -42,6 +42,12 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kafka
+                - clickhouse-operator-system
       validate:
         message: "runAsNonRoot must not be set to false."
         pattern:
